@@ -37,6 +37,7 @@ class FirstFragment : Fragment() {
         return inflater.inflate(R.layout.fragment_first, container, false)
     }
 
+
     companion object {
 
         // TODO: Rename and change types and number of parameters
