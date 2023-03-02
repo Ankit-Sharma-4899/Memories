@@ -45,7 +45,7 @@
     </LinearLayout>
     <androidx.cardview.widget.CardView
         android:layout_width="328dp"
-        android:layout_height="136dp"
+        android:layout_height="156dp"
         android:layout_marginTop="30dp"
         android:id="@+id/maincard"
         app:cardBackgroundColor="#8F00ADB5"
@@ -99,6 +99,7 @@
            android:text="Add Date"
            android:layout_gravity="end"
            android:textStyle="bold"
+           android:textSize="20sp"
            android:textColor="@color/white"
            android:layout_marginTop="110dp"
            android:layout_marginEnd="15dp"/>

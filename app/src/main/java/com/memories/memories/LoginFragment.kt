@@ -24,6 +24,9 @@ class LoginFragment : Fragment() {
             findNavController().navigate(R.id.action_loginFragment_to_registerFragment)
 
         }
+        binding.btnlogin.setOnClickListener {
+            findNavController().navigate(R.id.action_loginFragment_to_allDatesFragment2)
+        }
 
     }
 

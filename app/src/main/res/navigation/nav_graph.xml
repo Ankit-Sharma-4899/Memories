@@ -24,6 +24,9 @@
         <action
             android:id="@+id/action_loginFragment_to_registerFragment"
             app:destination="@id/registerFragment" />
+        <action
+            android:id="@+id/action_loginFragment_to_allDatesFragment2"
+            app:destination="@id/allDatesFragment2" />
     </fragment>
     <fragment
         android:id="@+id/registerFragment"
@@ -34,4 +37,8 @@
             android:id="@+id/action_registerFragment_to_loginFragment"
             app:destination="@id/loginFragment" />
     </fragment>
+    <fragment
+        android:id="@+id/allDatesFragment2"
+        android:name="com.memories.memories.AllDatesFragment"
+        android:label="AllDatesFragment" />
 </navigation>
