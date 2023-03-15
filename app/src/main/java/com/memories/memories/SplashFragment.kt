@@ -25,7 +25,6 @@ class SplashFragment : Fragment() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-
         binding = DataBindingUtil.setContentView(requireActivity(),R.layout.fragment_splash)
         binding.btnGetstarted.setOnClickListener{
             findNavController().navigate(R.id.action_nav_splash_to_loginFragment)
@@ -39,7 +38,6 @@ class SplashFragment : Fragment() {
         binding.textget.animation=shake
         Handler(Looper.getMainLooper()).postDelayed({
             binding.btnGetstarted.visibility=View.VISIBLE
-
         }, 2000)
 
     }

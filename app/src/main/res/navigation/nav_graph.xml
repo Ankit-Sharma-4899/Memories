@@ -11,7 +11,6 @@
         android:name="com.memories.memories.SplashFragment"
         android:label="splash"
         tools:layout="@layout/fragment_splash" >
-
         <action
             android:id="@+id/action_nav_splash_to_loginFragment"
             app:destination="@id/loginFragment" />

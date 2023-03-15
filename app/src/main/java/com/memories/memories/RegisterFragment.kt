@@ -17,12 +17,10 @@ private lateinit var binding: FragmentRegisterBinding
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         binding = DataBindingUtil.setContentView(requireActivity(),R.layout.fragment_register)
-        Glide.with(this@RegisterFragment).asGif().load(R.drawable.third_screen_gif).into(binding.loginanim);
-        binding.loginbutton.setOnClickListener {
-            findNavController().navigate(R.id.action_registerFragment_to_loginFragment)
-        }
+//        Glide.with(this@RegisterFragment).asGif().load(R.drawable.third_screen_gif).into(binding.loginanim);
+//        binding.loginbutton.setOnClickListener {
+//            findNavController().navigate(R.id.action_registerFragment_to_loginFragment)
+//        }
     }
-
-
 
 }

@@ -6,8 +6,10 @@ import androidx.fragment.app.Fragment
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.widget.CalendarView
 import android.widget.Toast
 import androidx.databinding.DataBindingUtil
+import com.memories.memories.Adapters.DatesAdapter
 import com.memories.memories.databinding.FragmentAllDatesBinding
 import java.util.*
 
@@ -36,9 +38,4 @@ private lateinit var binding: FragmentAllDatesBinding
         }
 
     }
-
-
-
-
-
 }
