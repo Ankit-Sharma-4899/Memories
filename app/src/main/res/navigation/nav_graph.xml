@@ -35,6 +35,9 @@
         <action
             android:id="@+id/action_registerFragment_to_loginFragment"
             app:destination="@id/loginFragment" />
+        <action
+            android:id="@+id/action_registerFragment_to_allDatesFragment2"
+            app:destination="@id/allDatesFragment2" />
     </fragment>
     <fragment
         android:id="@+id/allDatesFragment2"
