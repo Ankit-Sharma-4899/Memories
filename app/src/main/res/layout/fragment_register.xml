@@ -153,7 +153,7 @@
                 android:layout_marginTop="25dp"
                 android:layout_marginEnd="20dp"
                 android:layout_marginBottom="5dp"
-                android:backgroundTint="#00ADB5"
+                android:backgroundTint="#2E445C"
                 android:padding="13dp"
                 android:text="Continue"
                 android:textAllCaps="false"

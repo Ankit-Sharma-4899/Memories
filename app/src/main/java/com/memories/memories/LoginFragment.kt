@@ -1,10 +1,15 @@
 package com.memories.memories
 
+import android.app.AlertDialog
+import android.app.Dialog
+import android.content.DialogInterface
 import android.os.Bundle
+import android.util.Log
 import androidx.fragment.app.Fragment
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.widget.EditText
 import android.widget.Toast
 import androidx.databinding.DataBindingUtil
 import androidx.navigation.fragment.findNavController
@@ -33,6 +38,9 @@ class LoginFragment : Fragment() {
         binding.btnlogin.setOnClickListener{
             login()
         }
+        binding.forgotpassword.setOnClickListener {
+            findNavController().navigate(R.id.action_loginFragment_to_forgetPasswordFragment)
+        }
 
 
     }
@@ -53,9 +61,9 @@ class LoginFragment : Fragment() {
                 (activity as MainActivity).showToast("Login Successfull")
                 findNavController().navigate(R.id.action_loginFragment_to_allDatesFragment2)
             } else
-                (activity as MainActivity).showToast("Log In failed")
+                (activity as MainActivity).showToast("Please Enter valid Credentials")
         }.addOnFailureListener {
-                (activity as MainActivity).showToast("Lcnsicnsjc")
+
             }
     }
 

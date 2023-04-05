@@ -26,6 +26,9 @@
         <action
             android:id="@+id/action_loginFragment_to_allDatesFragment2"
             app:destination="@id/allDatesFragment2" />
+        <action
+            android:id="@+id/action_loginFragment_to_forgetPasswordFragment"
+            app:destination="@id/forgetPasswordFragment" />
     </fragment>
     <fragment
         android:id="@+id/registerFragment"
@@ -43,4 +46,9 @@
         android:id="@+id/allDatesFragment2"
         android:name="com.memories.memories.AllDatesFragment"
         android:label="AllDatesFragment" />
+    <fragment
+        android:id="@+id/forgetPasswordFragment"
+        android:name="com.memories.memories.ForgetPasswordFragment"
+        android:label="fragment_forget_password"
+        tools:layout="@layout/fragment_forget_password" />
 </navigation>
