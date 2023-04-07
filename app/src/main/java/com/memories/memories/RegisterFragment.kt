@@ -34,7 +34,9 @@ private lateinit var auth:FirebaseAuth
 
         }
         Glide.with(this@RegisterFragment).asGif().load(R.drawable.third_screen_gif).into(binding.loginanim);
-
+        binding.loginbutton.setOnClickListener {
+            findNavController().navigate(R.id.action_registerFragment_to_loginFragment)
+        }
     }
     private fun signUpUser() {
         binding.emailregister.text.toString()
@@ -42,7 +44,7 @@ private lateinit var auth:FirebaseAuth
         binding.confirmpass.text.toString()
 
         // check pass
-        if (binding.emailregister.text.isBlank() || binding.passwordregister.text.isBlank() || binding.confirmpass.text.isBlank()) {
+        if (binding.emailregister.text.toString().isBlank() || binding.passwordregister.text.toString().isBlank() || binding.confirmpass.text.toString().isBlank()) {
             Toast.makeText(requireContext(), "Email and Password can't be blank", Toast.LENGTH_SHORT).show()
             return
         }

@@ -51,7 +51,7 @@ class LoginFragment : Fragment() {
         // function using Firebase auth object
         // On successful response Display a Toast
 
-        if (binding.email.text.isBlank() || binding.password.text.isBlank()) {
+        if (binding.email.text.toString().isBlank()   || binding.password.text.toString().isBlank() ) {
             Toast.makeText(requireContext(), "Email and Password can't be blank", Toast.LENGTH_SHORT).show()
             return
         }

@@ -9,6 +9,7 @@ import android.view.ViewGroup
 import android.widget.CalendarView
 import android.widget.Toast
 import androidx.databinding.DataBindingUtil
+import androidx.navigation.fragment.findNavController
 import com.memories.memories.Adapters.DatesAdapter
 import com.memories.memories.databinding.FragmentAllDatesBinding
 import java.util.*
@@ -20,6 +21,9 @@ private lateinit var binding: FragmentAllDatesBinding
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         binding = DataBindingUtil.setContentView(requireActivity(),R.layout.fragment_all_dates)
+        binding.confirm.setOnClickListener {
+            findNavController().navigate(R.id.action_allDatesFragment2_to_fragmentDisplayImages)
+        }
         binding.calendarDate.setOnClickListener{
             val calendar = Calendar.getInstance()
             val datePickerDialog = DatePickerDialog(

@@ -45,10 +45,18 @@
     <fragment
         android:id="@+id/allDatesFragment2"
         android:name="com.memories.memories.AllDatesFragment"
-        android:label="AllDatesFragment" />
+        android:label="AllDatesFragment" >
+        <action
+            android:id="@+id/action_allDatesFragment2_to_fragmentDisplayImages"
+            app:destination="@id/fragmentDisplayImages" />
+    </fragment>
     <fragment
         android:id="@+id/forgetPasswordFragment"
         android:name="com.memories.memories.ForgetPasswordFragment"
         android:label="fragment_forget_password"
         tools:layout="@layout/fragment_forget_password" />
+    <fragment
+        android:id="@+id/fragmentDisplayImages"
+        android:name="com.memories.memories.FragmentDisplayImages"
+        android:label="FragmentDisplayImages" />
 </navigation>
