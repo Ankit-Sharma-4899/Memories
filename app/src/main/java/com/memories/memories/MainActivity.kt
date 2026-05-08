@@ -1,26 +1,35 @@
 package com.memories.memories
 
-import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
-import android.view.LayoutInflater
-import androidx.databinding.DataBindingUtil
-import androidx.navigation.fragment.NavHostFragment
-import androidx.navigation.ui.NavigationUI
-import androidx.appcompat.widget.Toolbar;
-import com.memories.memories.databinding.ActivityMainBinding
+import androidx.activity.ComponentActivity
+import androidx.activity.compose.setContent
+import androidx.activity.viewModels
+import com.memories.memories.data.di.AppContainer
+import com.memories.memories.presentation.MemoriesApp
+import com.memories.memories.presentation.auth.AuthViewModel
+import com.memories.memories.presentation.auth.AuthViewModelFactory
 
-class MainActivity : AppCompatActivity() {
+class MainActivity : ComponentActivity() {
 
-//    private lateinit var binding: ActivityMainBinding
+    private val appContainer by lazy { AppContainer() }
+    private val authViewModel by viewModels<AuthViewModel> {
+        AuthViewModelFactory(
+            getCurrentUserProfileUseCase = appContainer.getCurrentUserProfileUseCase,
+            loginUseCase = appContainer.loginUseCase,
+            registerUseCase = appContainer.registerUseCase,
+            sendEmailVerificationUseCase = appContainer.sendEmailVerificationUseCase,
+            markMobileVerifiedUseCase = appContainer.markMobileVerifiedUseCase,
+            sendPasswordResetUseCase = appContainer.sendPasswordResetUseCase
+        )
+    }
+
     override fun onCreate(savedInstanceState: Bundle?) {
-         super.onCreate(savedInstanceState)
-
-        setContentView(R.layout.activity_main)
-
-//        val navHostFragment = supportFragmentManager.findFragmentById(R.id.fragmentContainerView) as NavHostFragment
-//        val navController = navHostFragment.navController
-//        NavigationUI.setupActionBarWithNavController(this, navController)
-
-
+        super.onCreate(savedInstanceState)
+        setContent {
+            MemoriesApp(
+                appContainer = appContainer,
+                authViewModel = authViewModel
+            )
+        }
     }
 }

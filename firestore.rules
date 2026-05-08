@@ -1,0 +1,29 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+    match /usernames/{username} {
+      // Required for username/password login because the app must resolve
+      // a username to the Firebase Auth email before sign-in.
+      allow get: if true;
+      allow list: if false;
+
+      allow create: if request.auth != null
+        && request.resource.data.keys().hasOnly(['uid', 'authEmail'])
+        && request.resource.data.uid == request.auth.uid
+        && request.resource.data.authEmail is string;
+
+      allow update, delete: if false;
+    }
+
+    match /users/{uid} {
+      allow create: if request.auth != null
+        && request.auth.uid == uid;
+
+      allow read, update: if request.auth != null
+        && request.auth.uid == uid;
+
+      allow delete: if false;
+    }
+  }
+}
