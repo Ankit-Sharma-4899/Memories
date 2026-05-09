@@ -1,9 +1,12 @@
+@file:OptIn(androidx.compose.material3.ExperimentalMaterial3Api::class)
+
 package com.memories.memories.presentation.auth
 
 import android.app.DatePickerDialog
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -17,17 +20,18 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.widthIn
-import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.icons.filled.CalendarMonth
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.Badge
+import androidx.compose.material.icons.filled.CalendarMonth
 import androidx.compose.material.icons.filled.Email
 import androidx.compose.material.icons.filled.Lock
+import androidx.compose.material.icons.filled.MarkEmailRead
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.Phone
 import androidx.compose.material.icons.filled.Visibility
@@ -48,12 +52,14 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import com.memories.memories.R
 import com.memories.memories.domain.model.Gender
@@ -72,29 +78,16 @@ fun LoginScreen(
     onForgotPassword: () -> Unit
 ) {
     AuthScreenFrame(snackbarHostState = snackbarHostState) {
-        BrandHeader(title = "Welcome back", subtitle = "Sign in with your username and password")
-        AppTextField(
-            value = uiState.username,
-            onValueChanged = onUsernameChanged,
-            label = "Username or email",
-            icon = { Icon(Icons.Default.Person, contentDescription = null) }
-        )
-        PasswordField(
-            value = uiState.password,
-            label = "Password",
-            isVisible = uiState.isPasswordVisible,
-            onValueChanged = onPasswordChanged,
-            onToggleVisibility = onTogglePassword
-        )
+        BrandHeader(title = "Welcome back", subtitle = "Continue capturing your best moments")
+        AppTextField(uiState.username, onUsernameChanged, "Username or email") {
+            Icon(Icons.Default.Person, contentDescription = null)
+        }
+        PasswordField(uiState.password, "Password", uiState.isPasswordVisible, onPasswordChanged, onTogglePassword)
         TextButton(modifier = Modifier.align(Alignment.End), onClick = onForgotPassword) {
             Text("Forgot password?")
         }
         PrimaryButton(text = "Login", isLoading = uiState.isLoading, onClick = onLogin)
-        SwitchAuthRow(
-            text = "New to Memories?",
-            action = "Create account",
-            onClick = onCreateAccount
-        )
+        SwitchAuthRow("New to Memories?", "Create account", onCreateAccount)
     }
 }
 
@@ -115,80 +108,78 @@ fun RegisterScreen(
     onLogin: () -> Unit
 ) {
     AuthScreenFrame(snackbarHostState = snackbarHostState) {
-        BrandHeader(title = "Create profile", subtitle = "Tell us who you are before the first memory")
+        BrandHeader(title = "Create profile", subtitle = "Email verification protects every memory")
         AppTextField(uiState.name, onNameChanged, "Full name") {
             Icon(Icons.Default.Badge, contentDescription = null)
         }
         AppTextField(uiState.username, onUsernameChanged, "Username") {
             Icon(Icons.Default.Person, contentDescription = null)
         }
-        AppTextField(
-            value = uiState.email,
-            onValueChanged = onEmailChanged,
-            label = "Email (optional)",
-            keyboardType = KeyboardType.Email,
-            icon = { Icon(Icons.Default.Email, contentDescription = null) }
-        )
-        AppTextField(
-            value = uiState.mobileNumber,
-            onValueChanged = onMobileChanged,
-            label = "Mobile number",
-            keyboardType = KeyboardType.Phone,
-            icon = { Icon(Icons.Default.Phone, contentDescription = null) }
-        )
-        GenderSelector(selected = uiState.gender, onSelected = onGenderChanged)
-        DateOfBirthField(value = uiState.dateOfBirth, onDateSelected = onDateOfBirthChanged)
+        AppTextField(uiState.email, onEmailChanged, "Email", KeyboardType.Email) {
+            Icon(Icons.Default.Email, contentDescription = null)
+        }
+        AppTextField(uiState.mobileNumber, onMobileChanged, "Mobile number", KeyboardType.Phone) {
+            Icon(Icons.Default.Phone, contentDescription = null)
+        }
+        GenderSelector(uiState.gender, onGenderChanged)
+        DateOfBirthField(uiState.dateOfBirth, onDateOfBirthChanged)
+        PasswordField(uiState.password, "Password", uiState.isPasswordVisible, onPasswordChanged, onTogglePassword)
         PasswordField(
-            value = uiState.password,
-            label = "Password",
-            isVisible = uiState.isPasswordVisible,
-            onValueChanged = onPasswordChanged,
-            onToggleVisibility = onTogglePassword
+            uiState.confirmPassword,
+            "Confirm password",
+            uiState.isPasswordVisible,
+            onConfirmPasswordChanged,
+            onTogglePassword
         )
-        PasswordField(
-            value = uiState.confirmPassword,
-            label = "Confirm password",
-            isVisible = uiState.isPasswordVisible,
-            onValueChanged = onConfirmPasswordChanged,
-            onToggleVisibility = onTogglePassword
-        )
-        PrimaryButton(text = "Next", isLoading = uiState.isLoading, onClick = onRegister)
-        SwitchAuthRow(text = "Already onboarded?", action = "Login", onClick = onLogin)
+        PrimaryButton(text = "Send verification email", isLoading = uiState.isLoading, onClick = onRegister)
+        SwitchAuthRow("Already onboarded?", "Login", onLogin)
     }
 }
 
 @Composable
-fun OtpVerificationScreen(
+fun EmailVerificationScreen(
     uiState: AuthUiState,
     snackbarHostState: SnackbarHostState,
-    onOtpChanged: (String) -> Unit,
-    onResendOtp: () -> Unit,
-    onVerify: () -> Unit,
+    onResendEmail: () -> Unit,
+    onContinue: () -> Unit,
     onBack: () -> Unit
 ) {
     AuthScreenFrame(snackbarHostState = snackbarHostState) {
         IconButton(onClick = onBack) {
             Icon(Icons.Default.ArrowBack, contentDescription = "Back")
         }
-        BrandHeader(
-            title = "Verify account",
-            subtitle = "Enter the 6 digit OTP sent to ${uiState.mobileNumber.ifBlank { "your mobile" }}."
-        )
-        AppTextField(
-            value = uiState.otpCode,
-            onValueChanged = onOtpChanged,
-            label = "OTP",
-            keyboardType = KeyboardType.Number,
-            icon = { Icon(Icons.Default.Lock, contentDescription = null) }
-        )
-        TextButton(onClick = onResendOtp) {
-            Text("Resend OTP")
+        Box(
+            modifier = Modifier
+                .align(Alignment.CenterHorizontally)
+                .size(88.dp)
+                .clip(RoundedCornerShape(24.dp))
+                .background(MaterialTheme.colorScheme.primary.copy(alpha = 0.12f))
+                .border(2.dp, MaterialTheme.colorScheme.primary, RoundedCornerShape(24.dp)),
+            contentAlignment = Alignment.Center
+        ) {
+            Icon(
+                imageVector = Icons.Default.MarkEmailRead,
+                contentDescription = null,
+                tint = MaterialTheme.colorScheme.primary,
+                modifier = Modifier.size(42.dp)
+            )
         }
-        PrimaryButton(
-            text = "Verify OTP",
-            isLoading = uiState.isLoading,
-            onClick = onVerify
+        Spacer(modifier = Modifier.height(18.dp))
+        Text(
+            text = "Check your email",
+            style = MaterialTheme.typography.headlineMedium,
+            fontWeight = FontWeight.Bold
         )
+        Text(
+            text = "We sent a Firebase verification link to ${uiState.currentUser?.email ?: uiState.email}. Open it, then return here and continue.",
+            modifier = Modifier.padding(top = 8.dp, bottom = 22.dp),
+            style = MaterialTheme.typography.bodyLarge,
+            color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.68f)
+        )
+        PrimaryButton("I verified my email", uiState.isLoading, onContinue)
+        TextButton(onClick = onResendEmail, modifier = Modifier.align(Alignment.CenterHorizontally)) {
+            Text("Resend email")
+        }
     }
 }
 
@@ -196,7 +187,7 @@ fun OtpVerificationScreen(
 fun ForgotPasswordScreen(
     uiState: AuthUiState,
     snackbarHostState: SnackbarHostState,
-    onMobileChanged: (String) -> Unit,
+    onEmailChanged: (String) -> Unit,
     onSubmit: () -> Unit,
     onBack: () -> Unit
 ) {
@@ -204,54 +195,11 @@ fun ForgotPasswordScreen(
         IconButton(onClick = onBack) {
             Icon(Icons.Default.ArrowBack, contentDescription = "Back")
         }
-        BrandHeader(
-            title = "Reset password",
-            subtitle = "Verify your mobile number first, then create a new password."
-        )
-        AppTextField(
-            value = uiState.resetMobileNumber,
-            onValueChanged = onMobileChanged,
-            label = "Registered mobile number",
-            keyboardType = KeyboardType.Phone,
-            icon = { Icon(Icons.Default.Phone, contentDescription = null) }
-        )
-        PrimaryButton(text = "Send OTP", isLoading = uiState.isLoading, onClick = onSubmit)
-    }
-}
-
-@Composable
-fun NewPasswordScreen(
-    uiState: AuthUiState,
-    snackbarHostState: SnackbarHostState,
-    onPasswordChanged: (String) -> Unit,
-    onConfirmPasswordChanged: (String) -> Unit,
-    onTogglePassword: () -> Unit,
-    onSubmit: () -> Unit,
-    onBack: () -> Unit
-) {
-    AuthScreenFrame(snackbarHostState = snackbarHostState) {
-        IconButton(onClick = onBack) {
-            Icon(Icons.Default.ArrowBack, contentDescription = "Back")
+        BrandHeader("Reset password", "Firebase will email a secure reset link")
+        AppTextField(uiState.resetEmail, onEmailChanged, "Registered email", KeyboardType.Email) {
+            Icon(Icons.Default.Email, contentDescription = null)
         }
-        BrandHeader(
-            title = "Create new password",
-            subtitle = "Choose a strong password for your Memories account."
-        )
-        PasswordField(
-            value = uiState.newPassword,
-            label = "New password",
-            isVisible = uiState.isPasswordVisible,
-            onValueChanged = onPasswordChanged,
-            onToggleVisibility = onTogglePassword
-        )
-        PasswordField(
-            value = uiState.confirmNewPassword,
-            label = "Confirm new password",
-            isVisible = uiState.isPasswordVisible,
-            onValueChanged = onConfirmPasswordChanged,
-            onToggleVisibility = onTogglePassword
-        )
-        PrimaryButton(text = "Change password", isLoading = uiState.isLoading, onClick = onSubmit)
+        PrimaryButton(text = "Send reset email", isLoading = uiState.isLoading, onClick = onSubmit)
     }
 }
 
@@ -267,9 +215,9 @@ private fun AuthScreenFrame(
                 .background(
                     Brush.verticalGradient(
                         listOf(
-                            MaterialTheme.colorScheme.primary.copy(alpha = 0.24f),
+                            MaterialTheme.colorScheme.secondary.copy(alpha = 0.82f),
                             MaterialTheme.colorScheme.background,
-                            MaterialTheme.colorScheme.secondary.copy(alpha = 0.16f)
+                            MaterialTheme.colorScheme.primary.copy(alpha = 0.18f)
                         )
                     )
                 )
@@ -279,20 +227,16 @@ private fun AuthScreenFrame(
                 modifier = Modifier
                     .align(Alignment.Center)
                     .widthIn(max = 520.dp)
-                    .padding(horizontal = 24.dp, vertical = 20.dp)
-                    .clip(RoundedCornerShape(8.dp))
-                    .background(MaterialTheme.colorScheme.surface.copy(alpha = 0.92f))
-                    .border(
-                        width = 1.dp,
-                        color = MaterialTheme.colorScheme.primary.copy(alpha = 0.16f),
-                        shape = RoundedCornerShape(8.dp)
-                    )
+                    .padding(20.dp)
+                    .clip(RoundedCornerShape(20.dp))
+                    .background(MaterialTheme.colorScheme.surface.copy(alpha = 0.95f))
+                    .border(1.dp, MaterialTheme.colorScheme.outline.copy(alpha = 0.45f), RoundedCornerShape(20.dp))
                     .padding(22.dp)
-                .verticalScroll(rememberScrollState()),
+                    .verticalScroll(rememberScrollState()),
                 verticalArrangement = Arrangement.Center
             ) {
                 content(padding)
-                Spacer(modifier = Modifier.height(24.dp))
+                Spacer(modifier = Modifier.height(20.dp))
             }
         }
     }
@@ -303,23 +247,28 @@ private fun BrandHeader(title: String, subtitle: String) {
     Image(
         painter = painterResource(id = R.drawable.memories_logo),
         contentDescription = "Memories logo",
+        contentScale = ContentScale.Fit,
         modifier = Modifier
             .fillMaxWidth()
-            .height(150.dp)
-            .clip(RoundedCornerShape(8.dp))
+            .height(140.dp)
+            .clip(RoundedCornerShape(18.dp))
     )
-    Spacer(modifier = Modifier.height(20.dp))
-    Text(title, style = MaterialTheme.typography.headlineMedium, fontWeight = FontWeight.Bold)
+    Spacer(modifier = Modifier.height(18.dp))
+    Text(
+        text = title,
+        style = MaterialTheme.typography.headlineMedium,
+        fontFamily = FontFamily.Serif,
+        fontWeight = FontWeight.Bold
+    )
     Text(
         text = subtitle,
-        modifier = Modifier.padding(top = 8.dp, bottom = 22.dp),
+        modifier = Modifier.padding(top = 6.dp, bottom = 20.dp),
         style = MaterialTheme.typography.bodyLarge,
-        color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f)
+        color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.66f)
     )
 }
 
 @Composable
-@OptIn(ExperimentalMaterial3Api::class)
 private fun DateOfBirthField(value: String, onDateSelected: (String) -> Unit) {
     val context = LocalContext.current
     val calendar = Calendar.getInstance()
@@ -349,7 +298,6 @@ private fun DateOfBirthField(value: String, onDateSelected: (String) -> Unit) {
     Spacer(modifier = Modifier.height(12.dp))
 }
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun AppTextField(
     value: String,
@@ -365,12 +313,12 @@ private fun AppTextField(
         label = { Text(label) },
         singleLine = true,
         leadingIcon = icon,
+        shape = RoundedCornerShape(14.dp),
         keyboardOptions = KeyboardOptions(keyboardType = keyboardType)
     )
     Spacer(modifier = Modifier.height(12.dp))
 }
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun PasswordField(
     value: String,
@@ -394,13 +342,13 @@ private fun PasswordField(
                 )
             }
         },
+        shape = RoundedCornerShape(14.dp),
         visualTransformation = if (isVisible) VisualTransformation.None else PasswordVisualTransformation(),
         keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password)
     )
     Spacer(modifier = Modifier.height(12.dp))
 }
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun GenderSelector(selected: Gender, onSelected: (Gender) -> Unit) {
     Text(
@@ -418,7 +366,8 @@ private fun GenderSelector(selected: Gender, onSelected: (Gender) -> Unit) {
             FilterChip(
                 selected = selected == gender,
                 onClick = { onSelected(gender) },
-                label = { Text(gender.label) }
+                label = { Text(gender.label) },
+                shape = CircleShape
             )
         }
     }
@@ -432,6 +381,7 @@ private fun PrimaryButton(text: String, isLoading: Boolean, onClick: () -> Unit)
             .fillMaxWidth()
             .height(54.dp),
         enabled = !isLoading,
+        shape = RoundedCornerShape(14.dp),
         onClick = onClick
     ) {
         if (isLoading) {
@@ -453,7 +403,7 @@ private fun SwitchAuthRow(text: String, action: String, onClick: () -> Unit) {
         horizontalArrangement = Arrangement.Center,
         verticalAlignment = Alignment.CenterVertically
     ) {
-        Text(text)
+        Text(text, color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.64f))
         TextButton(onClick = onClick) {
             Text(action)
         }

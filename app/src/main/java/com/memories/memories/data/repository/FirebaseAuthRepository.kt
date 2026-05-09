@@ -16,7 +16,7 @@ class FirebaseAuthRepository(
     private val firestore: FirebaseFirestore
 ) : AuthRepository {
 
-    override fun isUserSignedIn(): Boolean = firebaseAuth.currentUser != null
+    override fun isUserSignedIn(): Boolean = firebaseAuth.currentUser?.isEmailVerified == true
 
     override suspend fun login(usernameOrEmail: String, password: String): Result<UserProfile> {
         val authEmail = if (usernameOrEmail.contains("@")) {
@@ -25,15 +25,22 @@ class FirebaseAuthRepository(
             findEmailForUsername(usernameOrEmail.lowercase()).getOrElse { return Result.failure(it) }
         }
 
-        return firebaseAuth.signInWithEmailAndPassword(authEmail, password)
+        val signIn = firebaseAuth.signInWithEmailAndPassword(authEmail, password)
             .await()
-            .mapCatching {
-                currentUserProfile().getOrThrow() ?: error("User profile not found")
-            }
+            .getOrElse { return Result.failure(it) }
+
+        val user = signIn.user ?: return Result.failure(IllegalStateException("Login failed"))
+        user.reload().await().getOrElse { return Result.failure(it) }
+        if (firebaseAuth.currentUser?.isEmailVerified != true) {
+            firebaseAuth.signOut()
+            return Result.failure(IllegalStateException("Please verify your email before login"))
+        }
+
+        return currentUserProfile().mapCatching { it ?: error("User profile not found") }
     }
 
     override suspend fun register(request: RegisterRequest): Result<UserProfile> {
-        val authEmail = request.email ?: syntheticEmail(request.mobileNumber)
+        val authEmail = request.email ?: return Result.failure(IllegalArgumentException("Email is required"))
         val username = request.username.lowercase()
 
         val existingUsername = firestore.collection(USERNAMES)
@@ -65,7 +72,7 @@ class FirebaseAuthRepository(
             mobileNumber = request.mobileNumber,
             gender = request.gender,
             dateOfBirth = request.dateOfBirth,
-            emailVerified = request.email == null,
+            emailVerified = user.isEmailVerified,
             mobileVerified = false
         )
 
@@ -94,10 +101,14 @@ class FirebaseAuthRepository(
             .await()
             .getOrElse { return Result.failure(it) }
 
+        user.sendEmailVerification().await().getOrElse { return Result.failure(it) }
+
         return Result.success(profile)
     }
 
     override suspend fun currentUserProfile(): Result<UserProfile?> {
+        val authUser = firebaseAuth.currentUser ?: return Result.success(null)
+        authUser.reload().await().getOrElse { return Result.failure(it) }
         val uid = firebaseAuth.currentUser?.uid ?: return Result.success(null)
         val document = firestore.collection(USERS)
             .document(uid)
@@ -118,7 +129,7 @@ class FirebaseAuthRepository(
                     Gender.valueOf(document.getString("gender").orEmpty())
                 }.getOrDefault(Gender.PreferNotToSay),
                 dateOfBirth = document.getString("dateOfBirth").orEmpty(),
-                emailVerified = document.getBoolean("emailVerified") ?: false,
+                emailVerified = firebaseAuth.currentUser?.isEmailVerified == true,
                 mobileVerified = document.getBoolean("mobileVerified") ?: false
             )
         )
@@ -131,19 +142,12 @@ class FirebaseAuthRepository(
         return user.sendEmailVerification().await().map { Unit }
     }
 
-    override suspend fun markMobileVerified(): Result<Unit> {
-        val uid = firebaseAuth.currentUser?.uid
-            ?: return Result.failure(IllegalStateException("Please login again"))
-
-        return firestore.collection(USERS)
-            .document(uid)
-            .update("mobileVerified", true)
-            .await()
-            .map { Unit }
-    }
-
     override suspend fun sendPasswordReset(email: String): Result<Unit> {
         return firebaseAuth.sendPasswordResetEmail(email).await().map { Unit }
+    }
+
+    override fun signOut() {
+        firebaseAuth.signOut()
     }
 
     private suspend fun findEmailForUsername(username: String): Result<String> {
@@ -159,11 +163,6 @@ class FirebaseAuthRepository(
         } else {
             Result.success(authEmail)
         }
-    }
-
-    private fun syntheticEmail(mobileNumber: String): String {
-        val digits = mobileNumber.filter { it.isDigit() }
-        return "$digits@memories.local"
     }
 
     private companion object {

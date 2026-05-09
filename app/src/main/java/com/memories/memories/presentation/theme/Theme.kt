@@ -5,15 +5,22 @@ import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
 
 private val LightColors = lightColorScheme(
-    primary = Moss,
-    onPrimary = Paper,
-    secondary = Clay,
-    onSecondary = Paper,
-    background = Paper,
-    onBackground = Ink,
-    surface = Paper,
-    onSurface = Ink,
-    surfaceVariant = SurfaceWarm
+    primary = AmberDark,
+    onPrimary = Cream,
+    primaryContainer = AmberLight,
+    onPrimaryContainer = Brown,
+    secondary = Brown,
+    onSecondary = Cream,
+    secondaryContainer = BrownSoft,
+    onSecondaryContainer = Cream,
+    tertiary = Green,
+    background = Cream,
+    onBackground = Brown,
+    surface = SurfaceWarm,
+    onSurface = Brown,
+    surfaceVariant = AmberLight,
+    outline = Border,
+    error = Red
 )
 
 @Composable

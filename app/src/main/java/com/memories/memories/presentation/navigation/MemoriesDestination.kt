@@ -4,8 +4,7 @@ enum class MemoriesDestination {
     Splash,
     Login,
     Register,
-    OtpVerification,
+    EmailVerification,
     ForgotPassword,
-    NewPassword,
     Dashboard
 }

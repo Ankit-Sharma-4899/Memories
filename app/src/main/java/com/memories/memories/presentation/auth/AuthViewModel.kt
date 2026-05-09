@@ -6,10 +6,10 @@ import com.memories.memories.domain.model.Gender
 import com.memories.memories.domain.model.RegisterRequest
 import com.memories.memories.domain.usecase.GetCurrentUserProfileUseCase
 import com.memories.memories.domain.usecase.LoginUseCase
-import com.memories.memories.domain.usecase.MarkMobileVerifiedUseCase
 import com.memories.memories.domain.usecase.RegisterUseCase
 import com.memories.memories.domain.usecase.SendEmailVerificationUseCase
 import com.memories.memories.domain.usecase.SendPasswordResetUseCase
+import com.memories.memories.domain.usecase.SignOutUseCase
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -21,8 +21,8 @@ class AuthViewModel(
     private val getCurrentUserProfileUseCase: GetCurrentUserProfileUseCase,
     private val registerUseCase: RegisterUseCase,
     private val sendEmailVerificationUseCase: SendEmailVerificationUseCase,
-    private val markMobileVerifiedUseCase: MarkMobileVerifiedUseCase,
-    private val sendPasswordResetUseCase: SendPasswordResetUseCase
+    private val sendPasswordResetUseCase: SendPasswordResetUseCase,
+    private val signOutUseCase: SignOutUseCase
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(AuthUiState())
@@ -45,11 +45,7 @@ class AuthViewModel(
     fun onPasswordChanged(value: String) = update { it.copy(password = value, message = null) }
     fun onConfirmPasswordChanged(value: String) = update { it.copy(confirmPassword = value, message = null) }
     fun onResetMobileChanged(value: String) = update { it.copy(resetMobileNumber = value, message = null) }
-    fun onNewPasswordChanged(value: String) = update { it.copy(newPassword = value, message = null) }
-    fun onConfirmNewPasswordChanged(value: String) = update { it.copy(confirmNewPassword = value, message = null) }
-    fun onOtpChanged(value: String) = update {
-        it.copy(otpCode = value.filter { char -> char.isDigit() }.take(6), message = null)
-    }
+    fun onResetEmailChanged(value: String) = update { it.copy(resetEmail = value, message = null) }
 
     fun togglePasswordVisibility() = update { it.copy(isPasswordVisible = !it.isPasswordVisible) }
     fun consumeMessage() = update { it.copy(message = null) }
@@ -92,16 +88,11 @@ class AuthViewModel(
                     update {
                         it.copy(
                             currentUser = profile,
-                            pendingVerification = if (profile.email == null) {
-                                VerificationTarget.Mobile
-                            } else {
-                                VerificationTarget.Mobile
-                            },
+                            pendingVerification = VerificationTarget.Email,
                             verificationPurpose = VerificationPurpose.SignUp,
-                            message = "Account created"
+                            message = "Verification email sent to ${profile.email}"
                         )
                     }
-                    update { it.copy(message = "OTP sent to ${profile.mobileNumber}. Use 123456 for this build.") }
                     onVerificationRequired()
                 },
                 onFailure = { showError(it) }
@@ -126,80 +117,51 @@ class AuthViewModel(
         }
     }
 
-    fun verifyOtp(onSuccess: () -> Unit) {
-        val state = _uiState.value
+    fun continueAfterEmailVerification(onSuccess: () -> Unit) {
         viewModelScope.launch {
-            when (state.pendingVerification) {
-                VerificationTarget.Email -> {
-                    update { it.copy(message = "After opening the verification email, continue to dashboard") }
-                    onSuccess()
-                }
-
-                VerificationTarget.Mobile -> {
-                    if (state.otpCode != DEMO_MOBILE_OTP) {
-                        update { it.copy(message = "Invalid OTP") }
-                        return@launch
+            setLoading(true)
+            val result = getCurrentUserProfileUseCase()
+            setLoading(false)
+            result.fold(
+                onSuccess = { profile ->
+                    if (profile?.emailVerified == true) {
+                        update { it.copy(currentUser = profile, message = "Email verified") }
+                        onSuccess()
+                    } else {
+                        update { it.copy(message = "Open the verification link from your email, then tap continue") }
                     }
-                    setLoading(true)
-                    val result = markMobileVerifiedUseCase()
-                    setLoading(false)
-                    result.fold(
-                        onSuccess = {
-                            update { it.copy(message = "Mobile verified") }
-                            onSuccess()
-                        },
-                        onFailure = { showError(it) }
-                    )
-                }
-
-                null -> {
-                    update { it.copy(message = "No verification is pending") }
-                }
-            }
+                },
+                onFailure = { showError(it) }
+            )
         }
     }
 
     fun sendPasswordReset() {
-        val resetMobile = _uiState.value.resetMobileNumber
-        if (resetMobile.isBlank()) {
-            update { it.copy(message = "Please enter your mobile number") }
-            return
-        }
-        update {
-            it.copy(
-                mobileNumber = resetMobile,
-                pendingVerification = VerificationTarget.Mobile,
-                verificationPurpose = VerificationPurpose.ForgotPassword,
-                message = "OTP sent to $resetMobile. Use 123456 for this build."
-            )
+        val email = _uiState.value.resetEmail
+        viewModelScope.launch {
+            setLoading(true)
+            val result = sendPasswordResetUseCase(email)
+            setLoading(false)
+            update {
+                it.copy(
+                    verificationPurpose = VerificationPurpose.ForgotPassword,
+                    message = result.fold(
+                        onSuccess = { "Password reset email sent to $email" },
+                        onFailure = { error -> error.message ?: "Could not send password reset email" }
+                    )
+                )
+            }
         }
     }
 
-    fun resendOtp() {
-        val mobile = _uiState.value.mobileNumber.ifBlank { _uiState.value.resetMobileNumber }
-        if (mobile.isBlank()) {
-            update { it.copy(message = "Please enter your mobile number") }
-            return
-        }
-        update { it.copy(message = "OTP resent to $mobile. Use 123456 for this build.") }
-    }
-
-    fun changePassword(onSuccess: () -> Unit) {
-        val state = _uiState.value
-        if (state.newPassword.length < 6) {
-            update { it.copy(message = "Password must be at least 6 characters") }
-            return
-        }
-        if (state.newPassword != state.confirmNewPassword) {
-            update { it.copy(message = "New password and confirm password do not match") }
-            return
-        }
+    fun signOut(onSignedOut: () -> Unit) {
+        signOutUseCase()
         update {
-            it.copy(
-                message = "Password change requires Firebase backend/Admin SDK after mobile OTP verification"
+            AuthUiState(
+                message = "Signed out"
             )
         }
-        onSuccess()
+        onSignedOut()
     }
 
     private fun update(block: (AuthUiState) -> AuthUiState) {
@@ -214,7 +176,4 @@ class AuthViewModel(
         update { it.copy(message = error.message ?: "Something went wrong") }
     }
 
-    private companion object {
-        const val DEMO_MOBILE_OTP = "123456"
-    }
 }

@@ -13,9 +13,7 @@ data class AuthUiState(
     val password: String = "",
     val confirmPassword: String = "",
     val resetMobileNumber: String = "",
-    val newPassword: String = "",
-    val confirmNewPassword: String = "",
-    val otpCode: String = "",
+    val resetEmail: String = "",
     val isPasswordVisible: Boolean = false,
     val isLoading: Boolean = false,
     val message: String? = null,
@@ -25,8 +23,7 @@ data class AuthUiState(
 )
 
 enum class VerificationTarget {
-    Email,
-    Mobile
+    Email
 }
 
 enum class VerificationPurpose {

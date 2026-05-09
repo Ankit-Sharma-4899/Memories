@@ -70,9 +70,9 @@ fun SplashScreen(
                 .background(
                     Brush.verticalGradient(
                         listOf(
-                            MaterialTheme.colorScheme.primary.copy(alpha = 0.88f),
-                            MaterialTheme.colorScheme.secondary.copy(alpha = 0.42f),
-                            MaterialTheme.colorScheme.background
+                            MaterialTheme.colorScheme.secondary,
+                            MaterialTheme.colorScheme.secondaryContainer,
+                            MaterialTheme.colorScheme.primary
                         )
                     )
                 )
@@ -88,9 +88,9 @@ fun SplashScreen(
                 Image(
                     painter = painterResource(id = R.drawable.memories_logo),
                     contentDescription = "Memories logo",
-                    contentScale = ContentScale.Crop,
+                    contentScale = ContentScale.Fit,
                     modifier = Modifier
-                        .size(280.dp)
+                        .size(300.dp)
                         .scale(logoScale)
                         .alpha(glow)
                 )

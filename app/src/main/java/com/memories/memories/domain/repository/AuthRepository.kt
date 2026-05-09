@@ -9,6 +9,6 @@ interface AuthRepository {
     suspend fun register(request: RegisterRequest): Result<UserProfile>
     suspend fun currentUserProfile(): Result<UserProfile?>
     suspend fun sendEmailVerification(): Result<Unit>
-    suspend fun markMobileVerified(): Result<Unit>
     suspend fun sendPasswordReset(email: String): Result<Unit>
+    fun signOut()
 }

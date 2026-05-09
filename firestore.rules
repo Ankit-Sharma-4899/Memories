@@ -24,6 +24,11 @@ service cloud.firestore {
         && request.auth.uid == uid;
 
       allow delete: if false;
+
+      match /memories/{memoryId} {
+        allow read, create, update, delete: if request.auth != null
+          && request.auth.uid == uid;
+      }
     }
   }
 }

@@ -11,13 +11,12 @@ import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.remember
 import com.memories.memories.data.di.AppContainer
 import com.memories.memories.presentation.auth.AuthViewModel
+import com.memories.memories.presentation.auth.EmailVerificationScreen
 import com.memories.memories.presentation.auth.ForgotPasswordScreen
 import com.memories.memories.presentation.auth.LoginScreen
-import com.memories.memories.presentation.auth.NewPasswordScreen
-import com.memories.memories.presentation.auth.OtpVerificationScreen
 import com.memories.memories.presentation.auth.RegisterScreen
-import com.memories.memories.presentation.auth.VerificationPurpose
 import com.memories.memories.presentation.dashboard.DashboardScreen
+import com.memories.memories.presentation.dashboard.MemoryViewModel
 import com.memories.memories.presentation.navigation.MemoriesDestination
 import com.memories.memories.presentation.splash.SplashScreen
 import com.memories.memories.presentation.theme.MemoriesTheme
@@ -25,7 +24,8 @@ import com.memories.memories.presentation.theme.MemoriesTheme
 @Composable
 fun MemoriesApp(
     appContainer: AppContainer,
-    authViewModel: AuthViewModel
+    authViewModel: AuthViewModel,
+    memoryViewModel: MemoryViewModel
 ) {
     MemoriesTheme {
         val startDestination = if (appContainer.isUserSignedInUseCase()) {
@@ -37,6 +37,7 @@ fun MemoriesApp(
         val currentDestination = backStack.last()
         val snackbarHostState = remember { SnackbarHostState() }
         val authState by authViewModel.uiState.collectAsState()
+        val memoryState by memoryViewModel.uiState.collectAsState()
 
         BackHandler(enabled = backStack.size > 1) {
             backStack.removeLast()
@@ -46,6 +47,16 @@ fun MemoriesApp(
             val message = authState.message ?: return@LaunchedEffect
             snackbarHostState.showSnackbar(message)
             authViewModel.consumeMessage()
+        }
+        LaunchedEffect(memoryState.message) {
+            val message = memoryState.message ?: return@LaunchedEffect
+            snackbarHostState.showSnackbar(message)
+            memoryViewModel.consumeMessage()
+        }
+        LaunchedEffect(currentDestination) {
+            if (currentDestination == MemoriesDestination.Dashboard) {
+                memoryViewModel.loadMemories()
+            }
         }
 
         Surface {
@@ -68,6 +79,7 @@ fun MemoriesApp(
                         authViewModel.login {
                             backStack.clear()
                             backStack.add(MemoriesDestination.Dashboard)
+                            memoryViewModel.loadMemories()
                         }
                     },
                     onCreateAccount = { backStack.add(MemoriesDestination.Register) },
@@ -89,7 +101,7 @@ fun MemoriesApp(
                     onRegister = {
                         authViewModel.register {
                             backStack.clear()
-                            backStack.add(MemoriesDestination.OtpVerification)
+                            backStack.add(MemoriesDestination.EmailVerification)
                         }
                     },
                     onLogin = {
@@ -97,20 +109,15 @@ fun MemoriesApp(
                     }
                 )
 
-                MemoriesDestination.OtpVerification -> OtpVerificationScreen(
+                MemoriesDestination.EmailVerification -> EmailVerificationScreen(
                     uiState = authState,
                     snackbarHostState = snackbarHostState,
-                    onOtpChanged = authViewModel::onOtpChanged,
-                    onResendOtp = authViewModel::resendOtp,
-                    onVerify = {
-                        authViewModel.verifyOtp {
-                            if (authState.verificationPurpose == VerificationPurpose.ForgotPassword) {
-                                backStack.clear()
-                                backStack.add(MemoriesDestination.NewPassword)
-                            } else {
-                                backStack.clear()
-                                backStack.add(MemoriesDestination.Dashboard)
-                            }
+                    onResendEmail = authViewModel::sendEmailVerification,
+                    onContinue = {
+                        authViewModel.continueAfterEmailVerification {
+                            backStack.clear()
+                            backStack.add(MemoriesDestination.Dashboard)
+                            memoryViewModel.loadMemories()
                         }
                     },
                     onBack = { backStack.removeLast() }
@@ -119,32 +126,32 @@ fun MemoriesApp(
                 MemoriesDestination.ForgotPassword -> ForgotPasswordScreen(
                     uiState = authState,
                     snackbarHostState = snackbarHostState,
-                    onMobileChanged = authViewModel::onResetMobileChanged,
+                    onEmailChanged = authViewModel::onResetEmailChanged,
                     onSubmit = {
                         authViewModel.sendPasswordReset()
-                        backStack.add(MemoriesDestination.OtpVerification)
-                    },
-                    onBack = { backStack.removeLast() }
-                )
-
-                MemoriesDestination.NewPassword -> NewPasswordScreen(
-                    uiState = authState,
-                    snackbarHostState = snackbarHostState,
-                    onPasswordChanged = authViewModel::onNewPasswordChanged,
-                    onConfirmPasswordChanged = authViewModel::onConfirmNewPasswordChanged,
-                    onTogglePassword = authViewModel::togglePasswordVisibility,
-                    onSubmit = {
-                        authViewModel.changePassword {
-                            backStack.clear()
-                            backStack.add(MemoriesDestination.Login)
-                        }
                     },
                     onBack = { backStack.removeLast() }
                 )
 
                 MemoriesDestination.Dashboard -> DashboardScreen(
                     userProfile = authState.currentUser,
-                    snackbarHostState = snackbarHostState
+                    uiState = memoryState,
+                    snackbarHostState = snackbarHostState,
+                    onSearchChanged = memoryViewModel::onSearchChanged,
+                    onAddClicked = memoryViewModel::showAddSheet,
+                    onDismissAdd = memoryViewModel::hideAddSheet,
+                    onTitleChanged = memoryViewModel::onTitleChanged,
+                    onDateChanged = memoryViewModel::onDateChanged,
+                    onNoteChanged = memoryViewModel::onNoteChanged,
+                    onPhotosSelected = memoryViewModel::onPhotosSelected,
+                    onSaveMemory = memoryViewModel::addMemory,
+                    onDeleteMemory = memoryViewModel::deleteMemory,
+                    onSignOut = {
+                        authViewModel.signOut {
+                            backStack.clear()
+                            backStack.add(MemoriesDestination.Login)
+                        }
+                    }
                 )
             }
 

@@ -8,6 +8,8 @@ import com.memories.memories.data.di.AppContainer
 import com.memories.memories.presentation.MemoriesApp
 import com.memories.memories.presentation.auth.AuthViewModel
 import com.memories.memories.presentation.auth.AuthViewModelFactory
+import com.memories.memories.presentation.dashboard.MemoryViewModel
+import com.memories.memories.presentation.dashboard.MemoryViewModelFactory
 
 class MainActivity : ComponentActivity() {
 
@@ -18,8 +20,15 @@ class MainActivity : ComponentActivity() {
             loginUseCase = appContainer.loginUseCase,
             registerUseCase = appContainer.registerUseCase,
             sendEmailVerificationUseCase = appContainer.sendEmailVerificationUseCase,
-            markMobileVerifiedUseCase = appContainer.markMobileVerifiedUseCase,
-            sendPasswordResetUseCase = appContainer.sendPasswordResetUseCase
+            sendPasswordResetUseCase = appContainer.sendPasswordResetUseCase,
+            signOutUseCase = appContainer.signOutUseCase
+        )
+    }
+    private val memoryViewModel by viewModels<MemoryViewModel> {
+        MemoryViewModelFactory(
+            getMemoriesUseCase = appContainer.getMemoriesUseCase,
+            addMemoryUseCase = appContainer.addMemoryUseCase,
+            deleteMemoryUseCase = appContainer.deleteMemoryUseCase
         )
     }
 
@@ -28,7 +37,8 @@ class MainActivity : ComponentActivity() {
         setContent {
             MemoriesApp(
                 appContainer = appContainer,
-                authViewModel = authViewModel
+                authViewModel = authViewModel,
+                memoryViewModel = memoryViewModel
             )
         }
     }
